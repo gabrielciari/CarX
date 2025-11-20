@@ -1,132 +1,426 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Painel de Pedidos - Cozinha</title>
-
-<!-- ✅ Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyA_P_c_-hDsMyzIDZN8bpBFJ1C-1OGF5F0",
-    authDomain: "pizzaria-social.firebaseapp.com",
-    databaseURL: "https://pizzaria-social-default-rtdb.firebaseio.com",
-    projectId: "pizzaria-social",
-    storageBucket: "pizzaria-social.appspot.com",
-    messagingSenderId: "215385735729",
-    appId: "1:215385735729:web:303178bcfae6366f6a0b10"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-</script>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>carX — Venda de Veículos</title>
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #ffede1;
-    color: #333;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  header {
-    background: #d8544a;
-    width: 100%;
-    padding: 15px 0;
-    color: white;
-    font-size: 2rem;
-    font-weight: bold;
-    text-align: center;
-    user-select: none;
-  }
-  main {
-    width: 95%;
-    max-width: 600px;
-    margin: 15px auto;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 0 12px rgba(216,84,74,0.5);
-    padding: 10px 15px;
-  }
-  .pedido {
-    border-bottom: 1px solid #f7b8aa;
-    padding: 12px 8px;
-  }
-  .pedido:last-child {
-    border-bottom: none;
-  }
-  .mesa {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #b5372e;
-  }
-  .itens {
-    margin-left: 12px;
-    font-size: 1.1rem;
-  }
-  .forma-pagamento {
-    margin-top: 6px;
-    font-weight: 600;
-    color: #d8544a;
-  }
-  .observacoes {
-    font-style: italic;
-    color: #755;
-    margin-top: 4px;
-    white-space: pre-wrap;
-  }
-  footer {
-    margin: 10px 0 20px;
-    font-size: 0.8rem;
-    color: #b54a41;
-  }
+    body { font-family: Arial, sans-serif; background: #0d0d0d; color: #fff; margin: 0; }
+    header { padding: 20px; text-align: center; background: #111; font-size: 32px; font-weight: bold; color: #00c3ff; border-bottom: 2px solid #00c3ff; }
+    .slider { width: 90%; max-width: 900px; height: 220px; margin: 20px auto; overflow: hidden; border-radius: 12px; border: 2px solid #00c3ff; position: relative; }
+    .slides { display: flex; width: 300%; animation: slide 12s infinite; }
+    .slides img { width: 100%; height: 220px; object-fit: cover; }
+    @keyframes slide { 0% { margin-left: 0; } 33% { margin-left: -100%; } 66% { margin-left: -200%; } 100% { margin-left: 0; } }
+    .container { max-width: 900px; margin: auto; padding: 20px; }
+    .card { background: #1a1a1a; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #333; }
+    h2 { color: #00c3ff; margin-bottom: 10px; }
+    input, select { width: 100%; padding: 10px; margin-top: 10px; border-radius: 8px; border: none; background: #222; color: #fff; }
+    button { padding: 12px; width: 100%; background: #00c3ff; border: none; border-radius: 8px; margin-top: 15px; font-size: 16px; cursor: pointer; font-weight: bold; }
+    button:hover { background: #0099cc; }
+    .result { background: #101010; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #00c3ff; white-space: pre-line; font-size: 16px; }
+    #chat-bubble { position: fixed; bottom: 20px; right: 20px; background: #4CAF50; color: #fff; padding: 14px 16px; border-radius: 50%; cursor: pointer; font-size: 22px; z-index: 99999; box-shadow: 0 0 10px #0005; }
+    #chat-box { position: fixed; bottom: 90px; right: 20px; width: 90%; max-width: 320px; height: 420px; background: #1a1a1a; color: #fff; border-radius: 14px; box-shadow: 0 0 12px #0007; display: none; flex-direction: column; z-index: 99999; }
+    @media (max-width: 480px) { #chat-box { bottom: 80px; right: 10px; width: calc(100% - 20px); height: 75vh; } }
+    #chat-header { background: #4CAF50; padding: 12px; text-align: center; font-weight: bold; border-radius: 14px 14px 0 0; }
+    #chat-messages { flex: 1; padding: 10px; overflow-y: auto; font-size: 14px; }
+    #chat-input { display: flex; border-top: 1px solid #333; }
+    #chat-input input { flex: 1; padding: 10px; border: none; outline: none; background: #0d0d0d; color: #fff; font-size: 15px; }
+    #chat-input button { padding: 10px; background: #4CAF50; border: none; cursor: pointer; color: #fff; font-weight: bold; width: 60px; }
 </style>
 </head>
 <body>
-<header>🍕 Painel de Pedidos - Cozinha</header>
-<main id="pedidos-container">
-  <!-- Pedidos aparecem aqui -->
-</main>
-<footer>™ Opportunità Pizzaria Social - Desenvolvido todos direitos reservados</footer>
+
+<header>carX — Venda de Veículos</header>
+
+<div class="slider">
+    <div class="slides">
+        <img src="https://i.imgur.com/WTksDXy.jpeg">
+        <img src="https://i.imgur.com/MFETVLh.jpeg">
+        <img src="https://i.imgur.com/pVoEWX2.jpeg">
+        <img src="https://i.imgur.com/lFB7TSp.jpeg">
+        <img src="https://i.imgur.com/AzpkVXL.jpeg">
+        <img src="https://i.imgur.com/xjfas8A.jpeg">
+        <img src="https://i.imgur.com/hKxIvEI.jpeg">
+        <img src="https://i.imgur.com/zBqhdwx.jpeg">
+    </div>
+</div>
+
+<div class="container">
+
+<div class="card">
+    <h2>Informações do Cliente</h2>
+    <input type="text" id="nome" placeholder="Seu nome">
+    <input type="text" id="telefone" placeholder="Seu telefone">
+    <input type="text" id="playerID" placeholder="ID do jogo">
+    <input type="text" id="serverName" placeholder="Servidor (Ex: BR-05)">
+</div>
+ 
+<div class="card">
+    <h2>Aluguel de Veículos</h2>
+    <select id="vehicle">
+        <option value="">Selecione o veículo...</option>
+        <option value="jeepdeguerra">jeep de guerra pesado — R$ 4500</option>
+        <option value="pequenalambretafesta">Pequena Lambreta Festa — R$ 7800</option>
+        <option value="pequenalambretacanto">Pequena Lambreta Canto — R$ 15000</option>
+        <option value="helicopterodeataque">Helicóptero de ataque — R$ 12000</option>
+        <option value="motoolanadorazul">Motoolanador azul — R$ 12000</option>
+        <option value="motoolanador">Motoolanador — R$ 12000</option>
+        <option value="tanquetigrebranco">tanque tigre branco — R$ 12000</option>
+    </select>
+
+    <label>Materiais que você possui:</label>
+    <input type="number" id="lingoteFerro" placeholder="Lingote de ferro tratado">
+    <input type="number" id="corpoChassi" placeholder="Corpo de helicóptero / Chassi">
+    <input type="number" id="engrenagem" placeholder="Engrenagem mecânica">
+    <input type="number" id="chapaFerro" placeholder="Chapa de ferro">
+
+    <button onclick="verificarMateriais()">Verificar materiais</button>
+    <button onclick="enviarZapVenda()">Enviar pedido</button>
+
+    <div id="resultadoVenda" class="result" style="display:none;"></div>
+</div>
+
+<button onclick="enviarZapGeral()">📩 Enviar pedido completo</button>
+
+<a href="https://wa.me/+556296094975" target="_blank">💬 Suporte</a>
+<p>Siga nossas redes:</p>
+<a href="https://www.instagram.com/trabalhando.no.digital?igsh=M3pkb3lrY3VnYTky" target="_blank">📸 Instagram</a>
+<a href="https://tiktok.com/@SEUTIKTOK" target="_blank">🎵 TikTok</a>
+
+</div>
+
+<!-- POPUP -->
+<script>
+function mostrarPopup(msg) {
+    const popup = document.createElement("div");
+    popup.style.position = "fixed";
+    popup.style.top = "50%";
+    popup.style.left = "50%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.background = "#111";
+    popup.style.padding = "25px";
+    popup.style.borderRadius = "12px";
+    popup.style.boxShadow = "0 0 25px rgba(0,0,0,0.5)";
+    popup.style.zIndex = "999999";
+    popup.style.color = "white";
+    popup.style.fontSize = "18px";
+    popup.style.textAlign = "center";
+    popup.innerHTML = `<strong>${msg}</strong>`;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 3000);
+}
+</script>
 
 <script>
-  const pedidosContainer = document.getElementById('pedidos-container');
+// ===== OBJETOS MATERIAIS E PREÇOS =====
+const materiais = {
+    jeepdeguerra: { lingoteFerro: 100, corpoChassi: 50, engrenagem: 20, chapaFerro: 0 },
+    pequenalambretafesta: { lingoteFerro: 150, corpoChassi: 70, engrenagem: 30, chapaFerro: 0 },
+    pequenalambretacanto: { lingoteFerro: 300, corpoChassi: 200, engrenagem: 80, chapaFerro: 0 },
+    helicopterodeataque: { lingoteFerro: 200, corpoChassi: 1, engrenagem: 40, chapaFerro: 40 },
+    motoolanadorazul: { lingoteFerro: 200, corpoChassi: 1, engrenagem: 40, chapaFerro: 40 },
+    motoolanador: { lingoteFerro: 200, corpoChassi: 1, engrenagem: 40, chapaFerro: 40 },
+    tanquetigrebranco: { lingoteFerro: 200, corpoChassi: 1, engrenagem: 40, chapaFerro: 40 } // <== corrigido
+};
 
-  // ✅ OUVE OS PEDIDOS DO FIREBASE EM TEMPO REAL
-  firebase.database().ref("pedidos").on("value", snapshot => {
-    const pedidos = snapshot.val();
-    pedidosContainer.innerHTML = '';
+const precoVenda = {
+    jeepdeguerra: 4500,
+    pequenalambretafesta: 7800,
+    pequenalambretacanto: 15000,
+    helicopterodeataque: 12000,
+    motoolanadorazul: 12000,
+    motoolanador: 12000,
+    tanquetigrebranco: 12000,
+};
 
-    if (!pedidos) {
-      pedidosContainer.innerHTML = '<p style="text-align:center; color:#b54a41;">Nenhum pedido recebido ainda.</p>';
-      return;
+const BOT_PHONE = "556296094975";
+const BOT_KEY = "2198964";
+
+// ===== FUNÇÕES =====
+function gerarIDProduto() { 
+    return "PROD-" + Math.floor(100000 + Math.random() * 900000); 
+}
+
+function verificarMateriais() {
+    const v = document.getElementById("vehicle").value;
+    if (!v) { mostrarPopup("❌ Selecione um veículo!"); return; }
+
+    const req = materiais[v];
+    const user = {
+        lingoteFerro: Number(document.getElementById("lingoteFerro").value || 0),
+        corpoChassi: Number(document.getElementById("corpoChassi").value || 0),
+        engrenagem: Number(document.getElementById("engrenagem").value || 0),
+        chapaFerro: Number(document.getElementById("chapaFerro").value || 0)
+    };
+
+    let faltas = [];
+    for (let m in req) { if (user[m] < req[m]) faltas.push(`${m}: ${req[m]-user[m]} faltando`); }
+
+    const box = document.getElementById("resultadoVenda");
+    box.style.display = "block";
+    box.innerText = `
+📦 Materiais para ${v.toUpperCase()}
+
+Necessário:
+Lingote: ${req.lingoteFerro}
+Chassi: ${req.corpoChassi}
+Engrenagem: ${req.engrenagem}
+Chapa: ${req.chapaFerro}
+
+Você possui:
+Lingote: ${user.lingoteFerro}
+Chassi: ${user.corpoChassi}
+Engrenagem: ${user.engrenagem}
+Chapa: ${user.chapaFerro}
+
+` + (faltas.length === 0 ? "✅ Você tem todos os materiais!" : "❌ Faltando:\n" + faltas.join("\n"));
+
+    if (faltas.length === 0) mostrarPopup("✅ Todos os materiais conferidos!");
+    else mostrarPopup("❌ Faltam materiais!");
+}
+
+function enviarZapVenda() {
+    const nome = document.getElementById("nome").value.trim();
+    const tel = document.getElementById("telefone").value.trim();
+    const pid = document.getElementById("playerID").value.trim();
+    const serv = document.getElementById("serverName").value.trim();
+    const v = document.getElementById("vehicle").value;
+
+    if (!nome || !tel || !pid || !serv || !v) { mostrarPopup("❌ Preencha todos os campos!"); return; }
+
+    const m = materiais[v];
+    const idProduto = gerarIDProduto();
+    const msg = `
+NOVA VENDA — carX
+
+🆔 ID do Produto: ${idProduto}
+
+👤 Nome: ${nome}
+📞 Telefone: ${tel}
+🎮 ID do Player: ${pid}
+🌍 Servidor: ${serv}
+
+🚗 Veículo: ${v.toUpperCase()}
+💰 Preço: R$ ${precoVenda[v].toLocaleString()}
+
+📦 Materiais necessários:
+• Lingotes: ${m.lingoteFerro}
+• Chassi: ${m.corpoChassi}
+• Engrenagem: ${m.engrenagem}
+• Chapas: ${m.chapaFerro}
+
+🕒 ${new Date().toLocaleString()}
+`;
+    enviarBot(msg);
+}
+
+function enviarZapGeral() {
+    const nome = document.getElementById("nome").value.trim();
+    const tel = document.getElementById("telefone").value.trim();
+    const pid = document.getElementById("playerID").value.trim();
+    const serv = document.getElementById("serverName").value.trim();
+
+    if (!nome || !tel || !pid || !serv) { mostrarPopup("❌ Preencha todos os campos!"); return; }
+
+    let msg = `
+PEDIDO COMPLETO — carX
+
+🆔 ID do Pedido: ${gerarIDProduto()}
+
+👤 Nome: ${nome}
+📞 Telefone: ${tel}
+🎮 Player ID: ${pid}
+🌍 Servidor: ${serv}
+`;
+
+    const v = document.getElementById("vehicle").value;
+    if (v) {
+        const m = materiais[v];
+        msg += `
+--- VENDA ---
+Veículo: ${v.toUpperCase()}
+Preço: R$ ${precoVenda[v].toLocaleString()}
+Materiais: ${m.lingoteFerro} lingotes, ${m.corpoChassi} chassi, ${m.engrenagem} engrenagem, ${m.chapaFerro} chapas
+`;
     }
 
-    // Transforma em array e ordena por hora
-    const listaPedidos = Object.values(pedidos).sort((a,b) => a.timestamp - b.timestamp);
+    msg += `\n🕒 ${new Date().toLocaleString()}`;
+    enviarBot(msg);
+}
 
-    listaPedidos.forEach(pedido => {
-      const div = document.createElement('div');
-      div.className = 'pedido';
+function enviarBot(texto) {
+    const url = "https://api.callmebot.com/whatsapp.php?phone=" + BOT_PHONE +
+        "&text=" + encodeURIComponent(texto) + "&apikey=" + BOT_KEY;
 
-      let itensText = '';
-      pedido.itens.forEach(i => {
-        itensText += `🍕 ${i.pizza} | Borda: ${i.borda} | Bebida: ${i.bebida || '-'}\n`;
-      });
+    fetch(url)
+        .then(() => mostrarPopup("✅ Pedido enviado com sucesso!"))
+        .catch(() => mostrarPopup("✅ Pedido enviado, logo entraremos em contato!"));
+}
 
-      div.innerHTML = `
-        <div class="mesa">Mesa ${pedido.mesa}</div>
-        <pre class="itens">${itensText}</pre>
-        <div class="forma-pagamento">Forma de pagamento: ${pedido.formaPagamento}</div>
-        ${pedido.observacoes ? `<div class="observacoes">Obs: ${pedido.observacoes}</div>` : ''}
-      `;
-      pedidosContainer.appendChild(div);
-    });
-  });
+// ========== CHAT BOT ORGANIZADO ==========
+
+function toggleChat() {
+    const box = document.getElementById("chat-box");
+    box.style.display = box.style.display === "flex" ? "none" : "flex";
+}
+
+function sendMsg() {
+    const input = document.getElementById("chatText");
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage("Você", text);
+
+    let clean = text.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[.,!?;:()]/g, "");
+
+    let resposta = "Não entendi, digite /start para ver o menu.";
+
+    // ======== MATERIAIS DO SEU SITE (Craft automático) ========
+    const craft = {
+        jeepdeguerra: { ferro: 100, chassi: 50, engrenagem: 20, chapa: 0 },
+        pequenalambretafesta: { ferro: 150, chassi: 70, engrenagem: 30, chapa: 0 },
+        pequenalambretacanto: { ferro: 300, chassi: 200, engrenagem: 80, chapa: 0 },
+        helicopterodeataque: { ferro: 200, chassi: 1, engrenagem: 40, chapa: 40 },
+        motoolanadorazul: { ferro: 200, chassi: 1, engrenagem: 40, chapa: 40 },
+        motoolanador: { ferro: 200, chassi: 1, engrenagem: 40, chapa: 40 },
+        tanquetigrebranco: { ferro: 200, chassi: 1, engrenagem: 40, chapa: 40 }
+    };
+
+    // ======== MENU PRINCIPAL ========
+    if (clean === "/start") {
+        resposta =
+`👋 Bem-vindo ao atendimento carX!
+
+Escolha uma opção:
+<br>1️⃣ Suporte
+<br>2️⃣ Formas de pagamento
+<br>3️⃣ Como funciona o aluguel
+<br>4️⃣ Craft dos veículos
+<br>5️⃣ Promoções
+<br>6️⃣ Dúvidas gerais
+<br>7️⃣ Encerrar atendimento
+
+Ou digite o NOME do veículo para ver o craft.`;
+    }
+
+    // ======== OPCÃO 1 ========
+    else if (clean === "1") {
+        resposta =
+`💬 <b>Suporte Oficial</b><br>
+<a href="https://wa.me/556296094975" target="_blank">Clique aqui para falar no WhatsApp</a>`;
+    }
+
+    // ======== OPCÃO 2 ========
+    else if (clean === "2") {
+        resposta =
+`💰 <b>Formas de pagamento</b><br>
+• Pix<br>
+• Cartão<br>
+• Boleto<br><br>
+Para finalizar a compra, envie:<br>
+Nome + Player ID + Servidor.`;
+    }
+
+    // ======== OPCÃO 3 ========
+    else if (clean === "3") {
+        resposta =
+`🚗 <b>Como funciona o aluguel</b><br><br>
+• Escolha o veículo<br>
+• Informe quantos servidores vai usar<br>
+• O preço muda conforme a quantidade<br>
+• Entregamos via WhatsApp<br><br>
+Digite o NOME do veículo para consultar valores.`;
+    }
+
+    // ======== OPCÃO 4 ========
+    else if (clean === "4") {
+        resposta =
+`🛠 <b>Craft dos veículos</b><br><br>
+Digite o NOME do veículo para ver o craft.<br>
+Exemplo: jeep de guerra, motoolanador, helicóptero…`;
+    }
+
+    // ======== OPCÃO 5 ========
+    else if (clean === "5") {
+        resposta =
+`🎁 <b>Promoções Ativas</b><br><br>
+🔥 Desconto progressivo<br>
+💥 Desconto especial no Pix<br>
+🎉 Promoções semanais<br>
+🚗 Pacotes com vários veículos<br><br>
+Digite o veículo para ver se tem promoção.`;
+    }
+
+    // ======== OPCÃO 6 ========
+    else if (clean === "6") {
+        resposta =
+`❓ <b>Dúvidas Frequentes</b><br><br>
+• Entrega via WhatsApp<br>
+• Precisa ter os materiais no jogo<br>
+• Entrega entre 5 e 20 minutos<br><br>
+Pergunte qualquer coisa!`;
+    }
+
+    // ======== OPCÃO 7 ========
+    else if (clean === "7") {
+        resposta = `👋 Atendimento encerrado. Digite /start para voltar.`;
+    }
+
+    // ======== CRAFT AUTOMÁTICO (onde acontece a mágica) ========
+    else if (craft[clean]) {
+        const c = craft[clean];
+        resposta =
+`🛠 <b>Craft de ${clean.toUpperCase()}</b><br><br>
+• Lingote de ferro tratado: ${c.ferro}<br>
+• Corpo / Chassi: ${c.chassi}<br>
+• Engrenagem mecânica: ${c.engrenagem}<br>
+• Chapa de ferro: ${c.chapa}<br><br>
+Se quiser enviar o pedido, faça pelo site ou chame no WhatsApp.`;
+    }
+
+    // ======== ATALHOS (mantidos) ========
+    else if (clean.includes("oi") || clean.includes("ola"))
+        resposta = "Olá! Digite /start para ver todas as opções 😊";
+    else if (clean.includes("suport"))
+        resposta = 'Fale com o suporte: <a href="https://wa.me/556296094975" target="_blank">WhatsApp</a>';
+    else if (clean.includes("preco"))
+        resposta = "Os preços variam conforme o veículo.";
+    else if (clean.includes("alugar"))
+        resposta = "Para alugar, selecione o veículo no site e envie.";
+    else if (clean.includes("comprar"))
+        resposta = "Para comprar, finalize o pedido no carrinho.";
+    else if (clean.includes("material"))
+        resposta = "Você deve ter os materiais necessários no jogo.";
+
+    // ======== ENVIAR RESPOSTA ========
+    setTimeout(() => addMessage("Bot", resposta), 300);
+    input.value = "";
+}
+
+
+// Função para adicionar mensagem
+function addMessage(user, msg) {
+    const box = document.getElementById("chat-messages");
+    const div = document.createElement("div");
+
+    div.innerHTML = `<b>${user}:</b><br> ${msg}<br><br>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
 </script>
+
+<div id="chat-bubble" onclick="toggleChat()">💬</div>
+<div id="chat-box">
+    <div id="chat-header">Atendimento</div>
+    <div id="chat-messages"></div>
+    <div id="chat-input">
+        <input type="text" id="chatText" placeholder="Digite sua mensagem...">
+        <button onclick="sendMsg()">➤</button>
+    </div>
+</div>
+
 </body>
 </html>
